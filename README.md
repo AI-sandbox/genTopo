@@ -28,3 +28,9 @@ and how to run pca.
 
 Has some experiments realting to distance matrix and inclusion rips.
 Adapted froa original by Brad Nelson.
+
+### visualize_cocylces.ipynb
+
+Contains code to create a plotly graph object with both a small dataset and
+one with a sample of 5000 points (approximately the number of PCs in the
+Himalayan data) to see what cocycles look like.

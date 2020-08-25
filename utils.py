@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 File from Devang Agrawal to take a vcf file (plink format) and return numpy arrays
 '''
 def process_vcf(vcf_file):
+
     vcf = allel.read_vcf(vcf_file)
     
     # Genotype array
@@ -39,6 +40,7 @@ def process_vcf(vcf_file):
 Function from Brad to plot cocyles from Ripser
 '''
 def plot_cocycle(X, cocycle, **kwargs):
+    
     """
     plot edges in cocycle
     """

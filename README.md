@@ -7,14 +7,24 @@ was supervised and coordinated by Alex Ioannidis.
 
 ## Files
 
-Plot_PCA2.ipynb
+### ripser.ipynb
+
+Explores the python ripser package and charts birth-death plots 
+of the Himalayan data. Due to compute, dimensionality reduction is
+key, and various subsets of the PCs as well as precomuted distance
+matrices on various metrics are considered.
+
+### Plot_PCA2.ipynb
 
 This notebook explores some PCA2 plots for various datasets along 
 with a pipeline for getting PCAs using plink2.
 
-plink_workflows.md
+### plink_workflows.md
 
 Contains linux commands for converting between .bed .bim .fam and .vcf,
 and how to run pca.
 
+### distance_matrix.ipynb
 
+Has some experiments realting to distance matrix and inclusion rips.
+Adapted froa original by Brad Nelson.

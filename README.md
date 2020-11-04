@@ -27,7 +27,7 @@ and how to run pca.
 ### distance_matrix.ipynb
 
 Has some experiments realting to distance matrix and inclusion rips.
-Adapted froa original by Brad Nelson.
+Adapted from original by Brad Nelson.
 
 ### visualize_cocylces.ipynb
 

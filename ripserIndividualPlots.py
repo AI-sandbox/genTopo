@@ -95,27 +95,36 @@ def display_cocycle_charts(cocycle_number_list,
     for i, idx in enumerate(np.flip(active_cocycle_indices)):
         cocycle = cocycles[1][idx]
         individuals = cocycle[:,:2].flatten()
-        idx_flipped = len(cocycle_number_list) - i - 1
+        idx_flipped = cocycle_number_list[::-1][i]
         labels_pc[individuals] = idx_flipped
 
-        # populations df for bar chart. 
+        # populations df for bar chart.
         # x // 2 as both haplotypes are in the popinfo but combined in the gt_matrix
         cocycle_pops = labels_pop.loc[{x // 2 for x in individuals}, 'POP']
         population_count_dict[idx_flipped] = Counter(cocycle_pops)
 
     # array of colors according to manually set colordict 
-    colors_pc = [colordict[x] for x in labels_pc]
-    sizes_pc = [point_size if x==-1 else point_size_large for x in labels_pc]
+    colors_pc = [colordict[x] for x in labels_pc if x != -1]
+#     sizes_pc = [point_size if x==-1 else point_size_large for x in labels_pc]
 
-    pd.DataFrame(gt_matrix_PCs).\
+    # Do background first so it appears behind
+    pd.DataFrame(gt_matrix_PCs[labels_pc==-1]).\
         plot.\
-        scatter(0,1, ax=ax2, c=colors_pc, s=sizes_pc, colorbar=False)
+        scatter(0, 1, ax=ax2, c=colordict[-1], s=point_size, colorbar=False)
+ 
+    pd.DataFrame(gt_matrix_PCs[labels_pc!=-1]).\
+        plot.\
+        scatter(0, 1, ax=ax2, c=colors_pc, s=point_size_large, colorbar=False)
     ax2.set_title('Principal Components of cocycle')
 
     # get histogram of populations
     population_count_df = pd.DataFrame(population_count_dict)
     colormap = map(colordict.get, population_count_df.columns)
     population_count_df.plot.bar(stacked=True, ax=ax3, color=colormap)
+
+    #legend_dict = {k:v for k, v in colordict.items() if k in cocycle_number_list}
+    ax3.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
     ax3.set_title('Counts of Populations in this cocycle')
+    
     
     return fig

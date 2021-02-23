@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import time
+import pprint
 from collections import Counter
 
 import allel
@@ -9,23 +11,56 @@ from ripser import ripser
 
 
 class cocycleIndividualPlot:
+    """
+    A class to create a plot to analyze cocycles from the Rips complex
+    and how they relate to the samples' underlying populations.
+    
+    ...
+    
+    Methods
+    -------
+    display_cocycle_charts : matplotlib.pyplot.figure
+        Produces three subplots: the first two principal components labelled by population, 
+        a birth death plot with labelled representative cocycles from the Rips complex, and
+        a histogram showing the breakdown of population in each of these cocycles.
+    
+    """
     def __init__(self,
                  popinfo_path,
                  vcf_file=None,
                  gt_matrix_PCs=None,
-                 result=None):
+                 ripser_result=None):
+        """
+        Parameters
+        ----------
+        popinfo_path : str
+            String location for the .csv containing population information for each sample
+        vcf_file : str
+            String location for the .vcf file
+        gt_matrix_PCs : (m, n) array
+            Genetic matrix indicating the encoding for individual n at 
+            poisition m.
+        ripser_result : dictionary of lists
+            Output from runnning ripser.ripser()
+            Contains various lists required to create the plots 
+        """
 
         self.popinfo_path = popinfo_path
         self.vcf_file = vcf_file
         self.gt_matrix_PCs = gt_matrix_PCs
-        self.result = result
+        self.ripser_result = ripser_result
 
         if vcf_file is None and gt_matrix_PCs is None:
             raise TypeError("Either vcf_file or gt_matrix_PCs required as input")
             
-    def preprocess(self):
+    def _preprocess(self):
+        """
+        Adds attributes which may have not been precalulated and input to the constructor
+        """
         if self.gt_matrix_PCs is None:
-            gt_matrix = self.process_vcf().get('gt_matrix')
+            start = time.time()
+            gt_matrix = self._process_vcf().get('gt_matrix')
+            print('gt_matrix took {} secs'.format(time.time() - start))
             
             # Normalize gt_matrix by site
             gt_matrix_norm = gt_matrix - np.mean(gt_matrix,axis=1)[:, np.newaxis]
@@ -37,15 +72,32 @@ class cocycleIndividualPlot:
             self.gt_matrix_PCs = np.diag(s) @ vh  
             
         # Get relevant objects from result of ripser
-        if self.result is None:
+        if self.ripser_result is None:
+            start = time.time()
             print("Getting ripser object")
-            self.result = ripser(self.gt_matrix_PCs, coeff=2, maxdim=1, do_cocycles=True)
+            self.ripser_result = ripser(self.gt_matrix_PCs, coeff=2, maxdim=1, do_cocycles=True)
+            print('Ripser took {} secs'.format(time.time() - start))
             
-    def process_vcf(self):
-        '''
-        Reference: https://github.com/AI-sandbox/genTools/blob/943662cc9433e8943cc536435eea1ffa87127879/file_processing.py#L113
-        File from Devang Agrawal to take a vcf file (plink format) and return numpy arrays
-        '''
+    def _process_vcf(self):
+        """
+        Reference: 
+        https://github.com/AI-sandbox/genTools/blob/master/gen_tools.py
+        File from Devang Agrawal to take a vcf file (plink format) and return a dictionary of numpy arrays
+        
+        Returns                                                                                   
+        -------  
+        Dictionary containing:
+
+        gt_matrix   : (m, n) array
+                      Genetic matrix indicating the encoding for individual n at 
+                      poisition m. 
+        ind_IDs     : (n,) array
+                      Individual IDs for all individuals in the matrix. 
+        rs_IDs      : (m,) array
+                      rs IDs of all the positions included in our matrix. 
+        positions   :  
+        """
+
         vcf = allel.read_vcf(self.vcf_file)
         # Genotype array
         gt = vcf['calldata/GT']
@@ -78,7 +130,8 @@ class cocycleIndividualPlot:
                                cocycle_number_list,
                                colordict=None,
                                cocycle_individuals_file=None,
-                               birth_death_coordinates_file=None):
+                               birth_death_coordinates_file=None,
+                               svg_file=None):
         """
         Plots population information by cocycle in the Rips complex.
 
@@ -86,23 +139,31 @@ class cocycleIndividualPlot:
         Birth-Death scatterplots, and as a histogram by population frequency.
 
         Parameters
-        ------------
-        cocycle_number_list (list): Odered list of cocycles, zero indexed with 0 being the most 
-                                    persistant, ie longest birth death time.
-        gt_matrix_PCs (numpy array):
-        colordict(dict):            A dictionary mapping the members of cocycle_number_list
-                                    to colors which should contrast each other as much as possible
-                                    as these are the colors the cocycles will show up with in the 
-                                    plots. -1 is the key of the base color.
-        result: (dict):             Output of ripser.ripser()
-        popinfo_path (str):         The location of the popinfo csv file.
+        -----------
+        cocycle_number_list : (list)
+            Odered list of cocycles, zero indexed with 0 being the most 
+            persistant, ie longest birth death time.
+        colordict : (dict)
+            A dictionary mapping the members of cocycle_number_list
+            to colors which should contrast each other as much as possible
+            as these are the colors the cocycles will show up with in the 
+            plots. -1 should be the key of the base color. There is a default 
+            which goes from -1 to 6.
+        cocycle_individuals_file (str):
+            The file to save a dictionary of the cocycles to the sample ids which
+            make them up, as a .txt file
+        birth_death_coordinates_file (str):
+            The file to save an array of the birth - death coordinates, as a .txt
+            file
+        svg_file (str):
+            The file to save the plot as a high quality .svg
 
-
-        Returns: 
-        A matplotlib fig object containing 3 subplots
+        Returns
+        -------
+        fig : matplotlib fig object containing the 3 subplots
         """
         # Obtain necessary inputs if missing
-        self.preprocess()
+        self._preprocess()
         
         if colordict is None:
             colordict = {
@@ -116,11 +177,11 @@ class cocycleIndividualPlot:
                 6: 'lightblue'
             }
 
-        diagrams = self.result['dgms']
-        cocycles = self.result['cocycles']
+        diagrams = self.ripser_result['dgms']
+        cocycles = self.ripser_result['cocycles']
         dgm1 = diagrams[1]
         num_cocycles = len(cocycles[1])
-        num_samples = len(self.result['idx_perm'])
+        num_samples = len(self.ripser_result['idx_perm'])
 
         # Config for plot
         xlabel, ylabel = "Birth", "Death"
@@ -179,12 +240,18 @@ class cocycleIndividualPlot:
             individuals = cocycle[:,:2].flatten()
             idx_flipped = cocycle_number_list[::-1][i]
             labels_pc[individuals] = idx_flipped
+#             labels_pc[individuals] = idx
 
             # populations df for bar chart.
             # x // 2 as both haplotypes are in the popinfo but combined in the gt_matrix
             cocycle_pops = labels_pop.loc[{x // 2 for x in individuals}, 'POP']
             population_count_dict[idx_flipped] = Counter(cocycle_pops)
             cocycle_individuals_dict[idx_flipped] = cocycle_pops.index.to_list()
+            
+        # sort for output
+        cocycle_individuals_dict = {k: v for k, v in sorted(cocycle_individuals_dict.items())}
+        print("Individuals in each cocycle:\n")
+        pprint.pprint(cocycle_individuals_dict)
 
         # array of colors according to manually set colordict 
         colors_pc = [colordict[x] for x in labels_pc if x != -1]
@@ -207,7 +274,7 @@ class cocycleIndividualPlot:
         ax3.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
         ax3.set_title('Counts of Populations by cocycle')
         
-        # save text files
+        # save text and svg files
         if cocycle_individuals_file is not None:
             with open(cocycle_individuals_file, "w") as f:
                 f.write(str(cocycle_individuals_dict))
@@ -215,6 +282,9 @@ class cocycleIndividualPlot:
         if birth_death_coordinates_file is not None:
             with open(birth_death_coordinates_file, "w") as f:
                 np.savetxt(f, dgm1.astype(int), fmt='%i')
+                
+        if svg_file is not None:
+            fig.savefig(svg_file, format="svg")
             
 
         return fig

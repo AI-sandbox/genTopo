@@ -4,45 +4,42 @@ import allel
 import plotly
 import plotly.graph_objects as go
 
-'''
-File from Devang Agrawal to take a vcf file (plink format) and return numpy arrays
-'''
-def process_vcf(vcf_file):
 
-    vcf = allel.read_vcf(vcf_file)
-    
-    # Genotype array
-    gt = vcf['calldata/GT']
 
-    n_variants, n_samples, ploidy = gt.shape
-    gt_matrix = gt.reshape(n_variants, n_samples * ploidy).astype(np.float32)
-    np.place(gt_matrix, gt_matrix < 0, np.nan)
+# def process_vcf(vcf_file):
+#     '''
+#     Reference: https://github.com/AI-sandbox/genTools/blob/943662cc9433e8943cc536435eea1ffa87127879/file_processing.py#L113
+#     File from Devang Agrawal to take a vcf file (plink format) and return numpy arrays
+#     '''
+#     vcf = allel.read_vcf(vcf_file)
+#     # Genotype array
+#     gt = vcf['calldata/GT']
+#     n_variants, n_samples, ploidy = gt.shape
+#     gt_matrix = gt.reshape(n_variants, n_samples * ploidy).astype(np.float32)
+#     np.place(gt_matrix, gt_matrix < 0, np.nan)
     
-    # ID
-    IDs = vcf['variants/ID']
-#     rs_IDs = [int(x[2:]) for x in IDs]
-    rs_IDs = [int(x.split(':')[-1]) for x in IDs]
+#     # ID
+#     IDs = vcf['variants/ID']
+#     rs_IDs = [int(x.split(':')[-1]) for x in IDs]
     
-    # Samples
-    samples = vcf['samples']
-    ind_IDs = []
-    for sample in samples:
-        ind_IDs.append(sample + '_A')
-        ind_IDs.append(sample + '_B')
-    ind_IDs = np.array(ind_IDs)
+#     # Samples
+#     samples = vcf['samples']
+#     ind_IDs = []
+#     for sample in samples:
+#         ind_IDs.append(sample + '_A')
+#         ind_IDs.append(sample + '_B')
+#     ind_IDs = np.array(ind_IDs)
     
-    # Positions
-    positions = vcf['variants/POS'].tolist()
+#     # Positions
+#     positions = vcf['variants/POS'].tolist()
     
-    return gt_matrix, rs_IDs, ind_IDs, positions
+#     return gt_matrix, rs_IDs, ind_IDs, positions
 
-'''
-Function from Brad to plot cocyles from Ripser
-'''
+
 def plot_cocycle(X, cocycle, **kwargs):
     
     """
-    plot edges in cocycle
+    Function from Brad to plot cocyles from Ripser
     """
     fig = go.Figure()
     fig.add_trace(go.Scatter(

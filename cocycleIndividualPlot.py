@@ -37,9 +37,9 @@ class cocycleIndividualPlot:
             String location for the .csv containing population information for each sample
         vcf_file : str
             String location for the .vcf file
-        gt_matrix_PCs : (m, n) array
+        gt_matrix_PCs : (n, m) array
             Genetic matrix indicating the encoding for individual n at 
-            poisition m.
+            Principal Component m (n = m).
         ripser_result : dictionary of lists
             Output from runnning ripser.ripser()
             Contains various lists required to create the plots 
@@ -63,13 +63,13 @@ class cocycleIndividualPlot:
             print('gt_matrix took {} secs'.format(time.time() - start))
             
             # Normalize gt_matrix by site
-            gt_matrix_norm = gt_matrix - np.mean(gt_matrix,axis=1)[:, np.newaxis]
+            gt_matrix_norm = gt_matrix - np.mean(gt_matrix, axis=1)[:, np.newaxis]
             
             # PCA
             start = time.time()
             u, s, vh = np.linalg.svd(gt_matrix_norm.T, full_matrices=False)
             print('SVD took {} secs'.format(time.time() - start))
-            self.gt_matrix_PCs = np.diag(s) @ vh  
+            self.gt_matrix_PCs = -u @ np.diag(s)
             
         # Get relevant objects from result of ripser
         if self.ripser_result is None:
@@ -124,7 +124,6 @@ class cocycleIndividualPlot:
                 'rs_IDs': rs_IDs,
                 'ind_IDs': ind_IDs,
                 'positions': positions}
-                
 
     def display_cocycle_charts(self,
                                cocycle_number_list,
@@ -212,9 +211,17 @@ class cocycleIndividualPlot:
         ax3 = fig.add_subplot(gs[1:, 1])
 
         # Get Birth Death Plot
-        pd.DataFrame(dgm1).\
-            plot.\
-            scatter(0, 1, ax=ax1, c=colors_bd, s=sizes_bd, colorbar=False, alpha=alpha)
+        df_dgm = pd.DataFrame(dgm1)
+        ax1.scatter(rand_jitter(df_dgm[0]),
+                    rand_jitter(df_dgm[1]),
+                    c=colors_bd,
+                    s=sizes_bd,
+#                     colorbar=False,
+                    alpha=alpha)
+        
+#         pd.DataFrame(dgm1).\
+#             plot.\
+#             scatter(0, 1, ax=ax1, c=colors_bd, s=sizes_bd, colorbar=False, alpha=alpha)
 
         ax1.set_xlim(left=x_down, right=x_up)
         ax1.set_ylim(bottom=x_down, top=x_up)
@@ -249,7 +256,7 @@ class cocycleIndividualPlot:
             cocycle_individuals_dict[idx_flipped] = cocycle_pops.index.to_list()
             
         # sort for output
-        cocycle_individuals_dict = {k: v for k, v in sorted(cocycle_individuals_dict.items())}
+        cocycle_individuals_dict = {k: sorted(v) for k, v in sorted(cocycle_individuals_dict.items())}
         print("Individuals in each cocycle:\n")
         pprint.pprint(cocycle_individuals_dict)
 
@@ -261,9 +268,17 @@ class cocycleIndividualPlot:
             plot.\
             scatter(0, 1, ax=ax2, c=colordict[-1], s=point_size, colorbar=False, alpha=alpha)
 
-        pd.DataFrame(self.gt_matrix_PCs[labels_pc!=-1]).\
-            plot.\
-            scatter(0, 1, ax=ax2, c=colors_pc, s=point_size_large, colorbar=False, alpha=alpha)
+#         pd.DataFrame(self.gt_matrix_PCs[labels_pc!=-1]).\
+#             plot.\
+#             scatter(0, 1, ax=ax2, c=colors_pc, s=point_size_large, colorbar=False, alpha=alpha)
+        gt_matrix_PCs_colored = pd.DataFrame(self.gt_matrix_PCs[labels_pc!=-1])
+
+        ax2.scatter(rand_jitter(gt_matrix_PCs_colored[0]),
+                    rand_jitter(gt_matrix_PCs_colored[1]),
+                    c=colors_pc,
+                    s=point_size_large,
+#                     colorbar=False,
+                    alpha=alpha)
         ax2.set_title('Principal Components of cocycles')
 
         # get histogram of populations
@@ -273,6 +288,10 @@ class cocycleIndividualPlot:
 
         ax3.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
         ax3.set_title('Counts of Populations by cocycle')
+
+        # Avoid overlappig x labels
+        if len(set(population_count_df.index)) > 15:
+            ax3.xaxis.set_tick_params(labelsize=5)
         
         # save text and svg files
         if cocycle_individuals_file is not None:
@@ -288,3 +307,13 @@ class cocycleIndividualPlot:
             
 
         return fig
+    
+
+def rand_jitter(arr, magnitude=0.01):
+    """
+    Move points around so they are not on top of each other on a scatterplot
+    
+    stackoverflow.com/questions/8671808/matplotlib-avoiding-overlapping-datapoints-in-a-scatter-dot-beeswarm-plot
+    """
+    stdev = magnitude * (max(arr) - min(arr))
+    return arr + np.random.randn(len(arr)) * stdev

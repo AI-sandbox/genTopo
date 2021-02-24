@@ -5,32 +5,62 @@ rotation in the Bustamante lab in Spring 2020. The files contain
 exploratory work applying TDA to the Himalayan data. The project
 was supervised and coordinated by Alex Ioannidis.
 
+
 ## Files
 
-### ripser.ipynb
+### notebooks/
 
-Explores the python ripser package and charts birth-death plots 
-of the Himalayan data. Due to compute, dimensionality reduction is
-key, and various subsets of the PCs as well as precomuted distance
-matrices on various metrics are considered.
+This directory contains various notebooks used for exploratory analysis and results for this project.
 
-### Plot_PCA2.ipynb
+### results/
 
-This notebook explores some PCA2 plots for various datasets along 
-with a pipeline for getting PCAs using plink2.
+This directory stores any results used such as flat files and images.
 
-### plink_workflows.md
+### cocycleIndividualPlot.py
 
-Contains linux commands for converting between .bed .bim .fam and .vcf,
-and how to run pca.
+Module with code to create a plot comparing PCA2, Birth - Death plot from the rips complex, and 
+for each of these point on the BD plot, called representative cocycyles, how they break down by
+population of the samples.
 
-### distance_matrix.ipynb
+Example usage:
 
-Has some experiments realting to distance matrix and inclusion rips.
-Adapted from original by Brad Nelson.
+1. From .vcf file:
 
-### visualize_cocylces.ipynb
+```python
+cocycles_ind_plot_vcf = cocycleIndividualPlot(vcf_file='/home/projects/HimalGenAsia/HimalGen.phase.vcf.gz',
+                                              popinfo_path='~/../projects/HimalGenAsia/HimalGen.popinfo.csv')
+                                              
+fig_vcf = cocycles_ind_plot_vcf.display_cocycle_charts(
+    cocycle_number_list=[0,1,2,3,5],
+    cocycle_individuals_file='results/cocycle_individuals.txt',
+    birth_death_coordinates_file='results/birth_death_coordinates_file.txt')
 
-Contains code to create a plotly graph object with both a small dataset and
-one with a sample of 5000 points (approximately the number of PCs in the
-Himalayan data) to see what cocycles look like.
+fig_vcf.suptitle('Population Breakdown of Most Persistant Cocycles for All Principal Components from vcf', fontsize=13)
+
+fig_vcf.show()                                
+```
+
+2. From precalculated genotype matrix and ripser object
+
+```python
+cocycles_ind_plot_gt_pcs = cocycleIndividualPlot(popinfo_path='~/../projects/HimalGenAsia/HimalGen.popinfo.csv',
+                                                 gt_matrix_PCs=gt_matrix_PCs,
+                                                 ripser_result=result_gt_pcs)
+fig = cocycles_ind_plot_gt_pcs.display_cocycle_charts(cocycle_number_list=[0,1,2,3,5])
+fig.suptitle('Population Breakdown of Most Persistant Cocycles for All Principal Components', fontsize=13)
+
+fig.show()
+
+```
+
+### ripser_individuals.ipynb
+
+Contains example usage of `cocycleIndividualPlot` on the Himalayan dataset.
+
+### TDA_in_Population_Genetics.pdf
+
+The final report
+
+### plotly_test.py
+
+Code to test deployment to turn cocycleIndividualPlot.py into a live web app.

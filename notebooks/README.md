@@ -4,6 +4,26 @@ This directory contains various notebooks used for exploratory analysis and resu
 
 ## Files
 
+### bats.ipynb
+
+Explore the rips filtration with the BATS.py package under various
+sampling regimes.
+
+### bats_new_examples.ipynb
+
+Explore the rips filtration with the BATS.py package with more 
+sophisticated cocycyle plotting.
+
+### distance_matrix.ipynb
+
+Has some experiments realting to distance matrix and inclusion rips.
+Adapted from original by Brad Nelson.
+
+### interactive_plot.ipynb
+
+Contains some sample code which could be adapted to deploy the 
+`cocycleIndividualPlot` as a live interactive plotly app.
+
 ### ripser.ipynb
 
 Explores the python ripser package and charts birth-death plots 
@@ -21,10 +41,6 @@ with a pipeline for getting PCAs using plink2.
 Contains linux commands for converting between .bed .bim .fam and .vcf,
 and how to run pca.
 
-### distance_matrix.ipynb
-
-Has some experiments realting to distance matrix and inclusion rips.
-Adapted from original by Brad Nelson.
 
 ### visualize_cocylces.ipynb
 
